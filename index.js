@@ -27,7 +27,7 @@ app.use(express.json());
 // }));
 
 // app.use(cors({ origin: "*" }));
-  
+
 
 app.use("/api/trips", tripesRoutes);
 app.use("/api/bookings", bookingRoutes);
