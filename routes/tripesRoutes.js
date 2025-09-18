@@ -9,7 +9,6 @@ import {
 } from "../controllers/tripsControler.js";
 // Example route for trips
 router.get("/", getAllTrips);
-
 router.get("/:id", getTripById);
 router.post("/admin", createTrip);
 router.delete("/admin/:id", deleteTrip);

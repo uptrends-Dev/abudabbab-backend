@@ -20,6 +20,16 @@ const tripSchema = new mongoose.Schema(
         message: "Trip must have between 1 and 5 images.",
       },
     },
+    features: [
+      {
+        title: { type: String, required: true, trim: true },
+        subtitle: { type: String, required: true, trim: true },
+      },
+    ],
+    tripTime: {
+      from: { type: String, required: true }, 
+      to: { type: String, required: true },
+    },
     prices: {
       adult: {
         egp: { type: Number, required: true, min: 0 },
