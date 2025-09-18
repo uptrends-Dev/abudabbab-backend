@@ -1,3 +1,4 @@
+// index.js
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
@@ -12,27 +13,29 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_VERCEL = !!process.env.VERCEL; // Vercel يضبط المتغير ده تلقائيًا
 
+// Middlewares
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
-
 }
 
 app.use(express.json());
-// app.use(cors({
-//   origin: process.env.CLIENT_URL || "http://localhost:3000",
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true
-// }));
 
-// app.use(cors({ origin: "*" }));
+// لو عايز CORS بسيط شغّاله كده (أو خصّص origin من ENV)
+app.use(
+  cors(
+    process.env.CLIENT_URL
+      ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
+      : {}
+  )
+);
 
-
+// Routes
 app.use("/api/trips", tripesRoutes);
 app.use("/api/bookings", bookingRoutes);
 
-// Catch wrong routes (like /ess/ee)
+// 404 handler
 app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
@@ -40,15 +43,21 @@ app.use((req, res, next) => {
 // Global error handler
 app.use(errorHandler);
 
-// Start
-connection().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+// DB connection (مرة واحدة عند الـ cold start)
+connection().catch((err) => {
+  console.error("Mongo connection error:", err);
 });
 
-// Handle unhandled promise rejections
+// ✅ في Vercel: ممنوع listen — نكتفي بالتصدير
+// ✅ محليًا: نعمل listen عادي
 let server;
+if (!IS_VERCEL) {
+  server = app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
+
+// Graceful shutdown (للتشغيل المحلي فقط)
 process.on("unhandledRejection", (err) => {
   console.error("UNHANDLED REJECTION 💥", err);
   if (server) {
@@ -60,3 +69,6 @@ process.on("unhandledRejection", (err) => {
     process.exit(1);
   }
 });
+
+// مهم جدًا لفريسل
+export default app;
