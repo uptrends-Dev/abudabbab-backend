@@ -1,7 +1,60 @@
 import Booking from "../models/booking.js";
 import { bookingEmailHtml, sendBookingEmail } from "../utils/email.js";
+
 import Trip from "../models/trips.js";
 import catchAsync from "../utils/catchAsync.js";
+
+// Create a new booking + send email ticket
+export const createBooking = async (req, res) => {
+  try {
+    const newBooking = { ...req.body };
+
+    // دعم انتقال: لو جاية tripId من الفرونت، حوّلها لـ tripInfo
+    if (!newBooking.tripInfo && newBooking.tripId) {
+      newBooking.tripInfo = newBooking.tripId;
+      delete newBooking.tripId;
+    }
+
+    // تأكيد وجود الرحلة
+    const trip = await Trip.findById(newBooking.tripInfo).lean();
+    if (!trip) return res.status(404).json({ message: "الرحلة غير موجودة" });
+
+    // حفظ الحجز
+    const booking = await Booking.create(newBooking);
+
+    // populate بالاسم والصور فقط
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate({ path: "tripInfo", select: "name images _id" })
+      .lean();
+
+    // استخدم البيانات المأهولة في الإيميل
+    const html = bookingEmailHtml(populatedBooking, trip);
+
+    try {
+      await sendBookingEmail({
+        to: booking.user.email,
+        subject: `Booking Confirmation - ${trip.name || "trip"}`,
+        html,
+      });
+
+      return res.status(201).json({
+        message: "تم إنشاء الحجز وإرسال التذكرة على الإيميل",
+        booking: populatedBooking,
+        emailSent: true,
+      });
+    } catch (mailErr) {
+      return res.status(201).json({
+        message:
+          "تم إنشاء الحجز، لكن فشل إرسال الإيميل. برجاء التواصل مع الدعم.",
+        booking: populatedBooking,
+        emailSent: false,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to create booking", error });
+  }
+};
+
 // Get all bookings
 export const getAllBookings = async (req, res) => {
   try {
@@ -47,56 +100,7 @@ export const getBookingById = async (req, res) => {
   }
 };
 
-// Create a new booking + send email ticket
-export const createBooking = async (req, res) => {
-  try {
-    const newBooking = { ...req.body };
 
-    // دعم انتقال: لو جاية tripId من الفرونت، حوّلها لـ tripInfo
-    if (!newBooking.tripInfo && newBooking.tripId) {
-      newBooking.tripInfo = newBooking.tripId;
-      delete newBooking.tripId;
-    }
-
-    // تأكيد وجود الرحلة
-    const trip = await Trip.findById(newBooking.tripInfo).lean();
-    if (!trip) return res.status(404).json({ message: "الرحلة غير موجودة" });
-
-    // حفظ الحجز
-    const booking = await Booking.create(newBooking);
-
-    // populate بالاسم والصور فقط
-    const populatedBooking = await Booking.findById(booking._id)
-      .populate({ path: "tripInfo", select: "name images _id" })
-      .lean();
-
-    // استخدم البيانات المأهولة في الإيميل
-    const html = bookingEmailHtml(populatedBooking, trip);
-
-    try {
-      await sendBookingEmail({
-        to: booking.user.email,
-        subject: `تأكيد الحجز - ${trip.name || "رحلة"}`,
-        html,
-      });
-
-      return res.status(201).json({
-        message: "تم إنشاء الحجز وإرسال التذكرة على الإيميل",
-        booking: populatedBooking,
-        emailSent: true,
-      });
-    } catch (mailErr) {
-      return res.status(201).json({
-        message:
-          "تم إنشاء الحجز، لكن فشل إرسال الإيميل. برجاء التواصل مع الدعم.",
-        booking: populatedBooking,
-        emailSent: false,
-      });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to create booking", error });
-  }
-};
 
 // display total booking for each trip
 // revenue for each trip
