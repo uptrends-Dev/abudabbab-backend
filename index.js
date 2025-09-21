@@ -23,23 +23,12 @@ if (process.env.NODE_ENV === "development") {
 app.use(express.json());
 
 // لو عايز CORS بسيط شغّاله كده (أو خصّص origin من ENV)
-// app.use(
-//   cors(
-//     process.env.CLIENT_URL
-//       ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
-//       : {}
-//   )
-// );
 app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://<your-frontend-domain>",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false, // خليها false لو مش بتستخدم كوكيز/credentials
-  })
+  cors(
+    process.env.CLIENT_URL
+      ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
+      : {}
+  )
 );
 
 // Routes
