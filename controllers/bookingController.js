@@ -106,69 +106,82 @@ export const getBookingById = async (req, res) => {
 // revenue for each trip
 
 export const advancedTripsInfos = catchAsync(async (req, res, next) => {
-  const bookings = await Booking.aggregate([
-    {
-      $match: {
-        tripInfo: { $ne: null }, // تأكد أن tripInfo ليس فارغًا
-      },
-    },
+  const result = await Booking.aggregate([
+    { $match: { tripInfo: { $ne: null } } },
     {
       $lookup: {
-        from: "trips", // اسم مجموعة الرحلات
-        localField: "tripInfo", // الحقل الذي يحتوي على ObjectId للرحلة
-        foreignField: "_id", // الحقل الذي يحتوي على الـ ObjectId في مجموعة الرحلات
-        as: "tripDetails", // اسم الحقل الذي سيحتوي على بيانات الرحلة بعد الربط
+        from: "trips",                // collection: trips
+        localField: "tripInfo",
+        foreignField: "_id",
+        as: "trip",
       },
     },
-    {
-      $unwind: "$tripDetails", // لفك العناصر المرتبطة بالرحلة
-    },
+    { $unwind: "$trip" },
     {
       $group: {
-        _id: "$tripDetails.name", // تجميع البيانات حسب اسم الرحلة
-        totalBookings: { $sum: 1 }, // عد عدد الحجوزات
-        totalEgp: { $sum: "$totalPrice.egp" }, // جمع إجمالي EGP
-        totalEuro: { $sum: "$totalPrice.euro" }, // جمع إجمالي اليورو
+        _id: "$trip._id",            // التجميع على الـ trip id
+        tripName: { $first: "$trip.name" },
+        coverImage: { $first: { $arrayElemAt: ["$trip.images", 0] } },
+        totalBookings: { $sum: 1 },
+        totalEgp: { $sum: { $ifNull: ["$totalPrice.egp", 0] } },
+        totalEuro: { $sum: { $ifNull: ["$totalPrice.euro", 0] } },
       },
     },
     {
       $project: {
-        tripName: "$_id", // عرض اسم الرحلة
-        totalBookings: 1, // عرض عدد الحجوزات
-        totalEgp: 1, // عرض إجمالي الـ EGP
-        totalEuro: 1, // عرض إجمالي اليورو
+        _id: 0,
+        tripId: "$_id",
+        tripName: 1,
+        coverImage: 1,
+        totalBookings: 1,
+        totalEgp: 1,
+        totalEuro: 1,
       },
     },
+    { $sort: { totalEgp: -1 } },     // ترتيب اختياري
   ]);
-  if (!bookings || bookings.length === 0) {
-    return next(new AppError("No booking found", 404));
-  }
 
-  res.status(200).json(bookings);
+  // رجّع Array فاضية بدل 404 — أسهل للواجهات
+  return res.status(200).json({ data: result });
 });
+
 
 // all revenue and total booking
 export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
-  const bookings = await Booking.aggregate([
+  const [stats = {}] = await Booking.aggregate([
     {
       $group: {
-        _id: null, // لا نقوم بتجميع حسب أي حقل، نقوم بحساب الإجمالي لكل البيانات
-        totalBookings: { $sum: 1 }, // حساب إجمالي عدد الحجوزات
-        totalEgp: { $sum: "$totalPrice.egp" }, // حساب إجمالي الـ EGP
-        totalEuro: { $sum: "$totalPrice.euro" }, // حساب إجمالي اليورو
+        _id: null,
+        totalBookings: { $sum: 1 },
+        totalTickets: {
+          $sum: {
+            $add: [
+              { $ifNull: ["$adult", 0] },
+              { $ifNull: ["$child", 0] },
+            ],
+          },
+        },
+        totalEgp: { $sum: { $ifNull: ["$totalPrice.egp", 0] } },
+        totalEuro: { $sum: { $ifNull: ["$totalPrice.euro", 0] } },
       },
     },
     {
       $project: {
-        totalBookings: 1, // عرض إجمالي الحجوزات
-        totalEgp: 1, // عرض إجمالي الـ EGP
-        totalEuro: 1, // عرض إجمالي اليورو
+        _id: 0,
+        totalBookings: 1,
+        totalTickets: 1,
+        totalEgp: 1,
+        totalEuro: 1,
       },
     },
   ]);
-  if (!bookings || bookings.length === 0) {
-    return next(new AppError("No booking found", 404));
-  }
 
-  res.status(200).json(bookings);
+  // لو مافيش حجوزات، رجّع صفرات
+  return res.status(200).json({
+    totalBookings: stats.totalBookings || 0,
+    totalTickets: stats.totalTickets || 0,
+    totalEgp: stats.totalEgp || 0,
+    totalEuro: stats.totalEuro || 0,
+  });
 });
+
