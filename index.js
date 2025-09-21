@@ -23,25 +23,13 @@ if (process.env.NODE_ENV === "development") {
 app.use(express.json());
 
 // لو عايز CORS بسيط شغّاله كده (أو خصّص origin من ENV)
-// app.use(
-//   cors(
-//     process.env.CLIENT_URL
-//       ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
-//       : {}
-//   )
-// );
-// ---------- CORS OPTIONS ----------
-const allowedOrigins = process.env.CLIENT_URL
-  ? process.env.CLIENT_URL.split(",").map(s => s.trim())
-  : ["http://localhost:3000"]; // افتراضياً اسمح للـ localhost
-
-const corsOptions = {
-  origin: allowedOrigins,                 // لازم تبقى دومينات صريحة لو هتستخدم credentials:true
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false,                     // خليه true فقط لو هتستخدم كوكيز/سِشن
-};
-
+app.use(
+  cors(
+    process.env.CLIENT_URL
+      ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
+      : {}
+  )
+);
 
 // Routes
 app.use("/api/trips", tripesRoutes);
