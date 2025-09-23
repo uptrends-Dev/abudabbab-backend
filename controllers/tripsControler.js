@@ -59,7 +59,7 @@ export const updateTrip = async (req, res) => {
     const trip = await Trip.findByIdAndUpdate(tripId, updatedTrip, {
       new: true,
     });
-    res.json({ message: `Trip ${tripId} updated`, trip });
+    res.status(200).json({ message: `Trip ${tripId} updated`, trip });
   } catch (error) {
     res.status(500).json({ message: "Error updating trip", error });
   }

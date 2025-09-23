@@ -100,8 +100,6 @@ export const getBookingById = async (req, res) => {
   }
 };
 
-
-
 // display total booking for each trip
 // revenue for each trip
 
@@ -110,7 +108,7 @@ export const advancedTripsInfos = catchAsync(async (req, res, next) => {
     { $match: { tripInfo: { $ne: null } } },
     {
       $lookup: {
-        from: "trips",                // collection: trips
+        from: "trips", // collection: trips
         localField: "tripInfo",
         foreignField: "_id",
         as: "trip",
@@ -119,12 +117,22 @@ export const advancedTripsInfos = catchAsync(async (req, res, next) => {
     { $unwind: "$trip" },
     {
       $group: {
-        _id: "$trip._id",            // التجميع على الـ trip id
+        _id: "$trip._id", // التجميع على الـ trip id
         tripName: { $first: "$trip.name" },
         coverImage: { $first: { $arrayElemAt: ["$trip.images", 0] } },
         totalBookings: { $sum: 1 },
         totalEgp: { $sum: { $ifNull: ["$totalPrice.egp", 0] } },
         totalEuro: { $sum: { $ifNull: ["$totalPrice.euro", 0] } },
+        createdAt: { $first: "$trip.createdAt" }, // إضافة حقل createdAt
+        updatedAt: { $first: "$trip.updatedAt" }, // إضافة حقل updatedAt
+        totalTickets: {
+          $sum: {
+            $add: [
+              { $ifNull: ["$adult", 0] }, // إضافة عدد البالغين
+              { $ifNull: ["$child", 0] }, // إضافة عدد الأطفال
+            ],
+          },
+        },
       },
     },
     {
@@ -136,15 +144,17 @@ export const advancedTripsInfos = catchAsync(async (req, res, next) => {
         totalBookings: 1,
         totalEgp: 1,
         totalEuro: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        totalTickets: 1, // تضمين مجموع التذاكر في النتيجة
       },
     },
-    { $sort: { totalEgp: -1 } },     // ترتيب اختياري
+    { $sort: { totalEgp: -1 } }, // ترتيب اختياري
   ]);
 
   // رجّع Array فاضية بدل 404 — أسهل للواجهات
   return res.status(200).json({ data: result });
 });
-
 
 // all revenue and total booking
 export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
@@ -155,10 +165,7 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
         totalBookings: { $sum: 1 },
         totalTickets: {
           $sum: {
-            $add: [
-              { $ifNull: ["$adult", 0] },
-              { $ifNull: ["$child", 0] },
-            ],
+            $add: [{ $ifNull: ["$adult", 0] }, { $ifNull: ["$child", 0] }],
           },
         },
         totalEgp: { $sum: { $ifNull: ["$totalPrice.egp", 0] } },
@@ -184,4 +191,3 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
     totalEuro: stats.totalEuro || 0,
   });
 });
-
