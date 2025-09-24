@@ -61,43 +61,45 @@ export const getAllBookings = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const sortOrder = req.query.sort === "asc" ? 1 : -1; //sorting Newest & Oldest
+    const sortOrder = req.query.sort === "asc" ? 1 : -1;  // sorting Newest & Oldest
 
-    // Initial query to fetch bookings
     let query = {};
 
-    // Filter by transportation (yes/no)
-    if (req.query.transportation) {
-      const transportation =
-        req.query.transportation.toLowerCase() === "yes" ? true : false;
-      query.transportation = transportation;
+    // فلتر البحث
+    if (req.query.q && req.query.searchField) {
+      query[`user.${req.query.searchField}`] = {
+        $regex: req.query.q,
+        $options: "i", // تجاهل حالة الحروف
+      };
     }
 
-    // Filter by trip name (search trip name)
-    if (req.query.tripName) {
-      query["tripInfo.name"] = { $regex: req.query.tripName, $options: "i" }; // Case insensitive search
+    // فلتر النقل
+    if (req.query.transferFilter && req.query.transferFilter !== "all") {
+      query.transportation = req.query.transferFilter === "yes";
     }
 
-    const bookings = await Booking.find(query) // Apply filters here
+    // الحصول على البيانات بناءً على الفلاتر
+    const bookings = await Booking.find(query)
       .populate({ path: "tripInfo", select: "name images _id prices" })
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: sortOrder })
       .lean();
 
-    const totalBookings = await Booking.countDocuments(query); // Apply filters to count as well
+    const totalBookings = await Booking.countDocuments(query); // حساب العدد الإجمالي
 
     res.status(200).json({
       totalBookings,
       currentPage: page,
       totalPages: Math.ceil(totalBookings / limit),
       sort: req.query.sort || "desc",
-      bookings, // tripInfo موجود جاهز بالاسم والصور فقط
+      bookings, // البيانات مع الرحلات
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to retrieve bookings", error });
   }
 };
+
 
 // Get booking by ID with trip details
 export const getBookingById = async (req, res) => {
