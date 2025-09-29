@@ -23,13 +23,13 @@ if (process.env.NODE_ENV === "development") {
 app.use(express.json());
 
 // لو عايز CORS بسيط شغّاله كده (أو خصّص origin من ENV)
-// app.use(
-//   cors(
-//     process.env.CLIENT_URL
-//       ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
-//       : {}
-//   )
-// );
+app.use(
+  cors(
+    process.env.CLIENT_URL
+      ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
+      : {}
+  )
+);
 
 // Routes
 app.use("/api/trips", tripesRoutes);
