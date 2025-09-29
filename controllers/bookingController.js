@@ -229,3 +229,61 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
     totalEuro: stats.totalEuro || 0,
   });
 });
+
+
+// Export bookings to CSV/Excel
+import XLSX from "xlsx";
+export const exportBookings = catchAsync(async (req, res, next) => {
+  const bookings = req.body?.bookings ?? [];
+
+  // 1) Prepare data for Excel
+  const excelData = bookings.map((b) => ({
+    "اسم العميل": b.user?.firstName ?? "-",
+    "رقم الهاتف": b.user?.phone ?? "-",
+    "اسم الرحلة": b.tripInfo?.name ?? "-",
+    "مواصلات": b.transportation ? "نعم" : "لا",
+    "تاريخ الحجز": b.bookingDate
+      ? new Date(b.bookingDate).toLocaleDateString("ar-EG", { timeZone: "Africa/Cairo" })
+      : "-",
+    "تاريخ الإنشاء": b.createdAt
+      ? new Date(b.createdAt).toLocaleString("ar-EG", {
+        timeZone: "Africa/Cairo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      : "-",
+  }));
+
+  // 2) Create workbook & worksheet
+  const workbook = XLSX.utils.book_new();
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+  // Optional: set column widths
+  worksheet["!cols"] = [
+    { wch: 20 }, // اسم العميل
+    { wch: 15 }, // رقم الهاتف
+    { wch: 20 }, // اسم الرحلة
+    { wch: 12 }, // مواصلات
+    { wch: 15 }, // تاريخ الحجز
+    { wch: 20 }, // تاريخ الإنشاء
+  ];
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "الحجوزات");
+
+  // 3) Generate Excel file buffer
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+  // 4) Return as response
+  const date = new Date().toISOString().split("T")[0];
+  const filename = `bookings-${date}.xlsx`;
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.status(200).send(excelBuffer);
+});
