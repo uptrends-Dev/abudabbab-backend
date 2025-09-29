@@ -14,7 +14,7 @@ router.get("/admin", getAllBookings);
 router.get("/advancedTripsInfos/admin", advancedTripsInfos);
 router.get("/getTotalBookingsAndRevenue/admin", getTotalBookingsAndRevenue);
 router.get("/admin/:id", getBookingById);
-router.get("/export", exportBookings);
+router.post("/export", exportBookings);
 router.post("/", createBooking);
 
 
