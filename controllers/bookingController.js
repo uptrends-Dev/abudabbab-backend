@@ -11,7 +11,6 @@ import { buildCreatedAtMatch } from "../helpers/filterTime.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-
 // Create a new booking + send email ticket
 export const createBooking = async (req, res) => {
   try {
@@ -138,7 +137,9 @@ export const advancedTripsInfos = catchAsync(async (req, res, next) => {
   const pipeline = [];
 
   // فلتر الوقت + عدم كون tripInfo null
-  pipeline.push({ $match: Object.assign({ tripInfo: { $ne: null } }, timeMatch || {}) });
+  pipeline.push({
+    $match: Object.assign({ tripInfo: { $ne: null } }, timeMatch || {}),
+  });
 
   pipeline.push(
     {
@@ -188,7 +189,6 @@ export const advancedTripsInfos = catchAsync(async (req, res, next) => {
   return res.status(200).json({ data: result });
 });
 
-
 // all revenue and total booking
 export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
   const { match: timeMatch, error } = buildCreatedAtMatch(req.query);
@@ -203,7 +203,9 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
         _id: null,
         totalBookings: { $sum: 1 },
         totalTickets: {
-          $sum: { $add: [{ $ifNull: ["$adult", 0] }, { $ifNull: ["$child", 0] }] },
+          $sum: {
+            $add: [{ $ifNull: ["$adult", 0] }, { $ifNull: ["$child", 0] }],
+          },
         },
         totalEgp: { $sum: { $ifNull: ["$totalPrice.egp", 0] } },
         totalEuro: { $sum: { $ifNull: ["$totalPrice.euro", 0] } },
@@ -230,7 +232,6 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
   });
 });
 
-
 // Export bookings to CSV/Excel
 import XLSX from "xlsx";
 export const exportBookings = catchAsync(async (req, res, next) => {
@@ -241,19 +242,28 @@ export const exportBookings = catchAsync(async (req, res, next) => {
     "اسم العميل": b.user?.firstName ?? "-",
     "رقم الهاتف": b.user?.phone ?? "-",
     "اسم الرحلة": b.tripInfo?.name ?? "-",
-    "مواصلات": b.transportation ? "نعم" : "لا",
+    " سعر الرحلة للكبار بالمصري": b.tripInfo?.prices?.adult?.egp ?? "-",
+    " سعر الرحلة للكبار باليورو": b.tripInfo?.prices?.adult?.euro ?? "-",
+    " سعر الرحلة للاطفال بالمصري": b.tripInfo?.prices?.child?.egp ?? "-",
+    " سعر الرحلة للاطفال باليورو": b.tripInfo?.prices?.child?.euro ?? "-",
+    "  سعر الحجز بالمصري": b.totalPrice?.egp ?? "-",
+    "  سعر الحجز باليورو": b.totalPrice?.euro ?? "-",
+
+    مواصلات: b.transportation ? "نعم" : "لا",
     "تاريخ الحجز": b.bookingDate
-      ? new Date(b.bookingDate).toLocaleDateString("ar-EG", { timeZone: "Africa/Cairo" })
+      ? new Date(b.bookingDate).toLocaleDateString("ar-EG", {
+          timeZone: "Africa/Cairo",
+        })
       : "-",
     "تاريخ الإنشاء": b.createdAt
       ? new Date(b.createdAt).toLocaleString("ar-EG", {
-        timeZone: "Africa/Cairo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+          timeZone: "Africa/Cairo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "-",
   }));
 
@@ -274,7 +284,10 @@ export const exportBookings = catchAsync(async (req, res, next) => {
   XLSX.utils.book_append_sheet(workbook, worksheet, "الحجوزات");
 
   // 3) Generate Excel file buffer
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "buffer",
+  });
 
   // 4) Return as response
   const date = new Date().toISOString().split("T")[0];
