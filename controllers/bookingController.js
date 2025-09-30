@@ -242,6 +242,9 @@ export const exportBookings = catchAsync(async (req, res, next) => {
     "اسم العميل": b.user?.firstName ?? "-",
     "رقم الهاتف": b.user?.phone ?? "-",
     "اسم الرحلة": b.tripInfo?.name ?? "-",
+    "عدد الكبار ": b.adult ?? "-",
+    "عدد الاطفال ": b.child ?? "-",
+
     " سعر الرحلة للكبار بالمصري": b.tripInfo?.prices?.adult?.egp ?? "-",
     " سعر الرحلة للكبار باليورو": b.tripInfo?.prices?.adult?.euro ?? "-",
     " سعر الرحلة للاطفال بالمصري": b.tripInfo?.prices?.child?.egp ?? "-",
