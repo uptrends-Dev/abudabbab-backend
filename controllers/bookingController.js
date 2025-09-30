@@ -12,36 +12,121 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // Create a new booking + send email ticket
+// export const createBooking = async (req, res) => {
+//   try {
+//     const newBooking = { ...req.body };
+
+//     // دعم انتقال: لو جاية tripId من الفرونت، حوّلها لـ tripInfo
+//     if (!newBooking.tripInfo && newBooking.tripId) {
+//       newBooking.tripInfo = newBooking.tripId;
+//       delete newBooking.tripId;
+//     }
+
+//     // تأكيد وجود الرحلة
+//     const trip = await Trip.findById(newBooking.tripInfo).lean();
+//     if (!trip) return res.status(404).json({ message: "الرحلة غير موجودة" });
+
+//     // حفظ الحجز
+//     const booking = await Booking.create(newBooking);
+
+//     // populate بالاسم والصور فقط
+//     const populatedBooking = await Booking.findById(booking._id)
+//       .populate({ path: "tripInfo", select: "name images _id" })
+//       .lean();
+
+//     // استخدم البيانات المأهولة في الإيميل
+//     const html = bookingEmailHtml(populatedBooking, trip);
+
+//     try {
+//       await sendBookingEmail({
+//         to: booking.user.email,
+//         subject: `Booking Confirmation - ${trip.name || "trip"}`,
+//         html,
+//       });
+
+//       return res.status(201).json({
+//         message: "تم إنشاء الحجز وإرسال التذكرة على الإيميل",
+//         booking: populatedBooking,
+//         emailSent: true,
+//       });
+//     } catch (mailErr) {
+//       return res.status(201).json({
+//         message:
+//           "تم إنشاء الحجز، لكن فشل إرسال الإيميل. برجاء التواصل مع الدعم.",
+//         booking: populatedBooking,
+//         emailSent: false,
+//       });
+//     }
+//   } catch (error) {
+//     return res.status(500).json({ message: "Failed to create booking", error });
+//   }
+// };
+// controller
+import QRCode from "qrcode";
+// ... باقي الاستيرادات
+
 export const createBooking = async (req, res) => {
   try {
     const newBooking = { ...req.body };
 
-    // دعم انتقال: لو جاية tripId من الفرونت، حوّلها لـ tripInfo
     if (!newBooking.tripInfo && newBooking.tripId) {
       newBooking.tripInfo = newBooking.tripId;
       delete newBooking.tripId;
     }
 
-    // تأكيد وجود الرحلة
     const trip = await Trip.findById(newBooking.tripInfo).lean();
     if (!trip) return res.status(404).json({ message: "الرحلة غير موجودة" });
 
-    // حفظ الحجز
     const booking = await Booking.create(newBooking);
 
-    // populate بالاسم والصور فقط
     const populatedBooking = await Booking.findById(booking._id)
       .populate({ path: "tripInfo", select: "name images _id" })
       .lean();
 
-    // استخدم البيانات المأهولة في الإيميل
-    const html = bookingEmailHtml(populatedBooking, trip);
+    // ====== QR ======
+    const ref = booking._id.toString().slice(-8).toUpperCase();
+    const qrCid = `ticketqr_${ref}`;
+
+    // محتوى الـ QR: اختَر واحد
+    // 1) نص محسّن (سهل الاستخدام أوفلاين):
+    const payload = JSON.stringify({
+      v: 1,
+      bid: String(booking._id),
+      ref,
+      trip: trip.name,
+      date: booking.bookingDate,
+    });
+
+    // 2) أو لينك تحقق (لو عندك صفحة تحقق/تشيك-إن):
+    // const base = process.env.PUBLIC_BASE_URL || "https://example.com";
+    // const payload = `${base}/ticket/${booking._id}?ref=${ref}`;
+
+    // إنشاء الصورة
+    const qrPayload = JSON.stringify({ bid: String(booking._id) }); // 👈 بس الـ id
+    const qrPng = await QRCode.toBuffer(qrPayload, {
+      type: "png",
+      errorCorrectionLevel: "H",
+      width: 600,
+      margin: 2,
+      color: { dark: "#000000", light: "#FFFFFF" },
+    });
+
+    // HTML مع إدراج الـ QR عبر cid
+    const html = bookingEmailHtml(populatedBooking, trip, { qrCid });
 
     try {
       await sendBookingEmail({
         to: booking.user.email,
         subject: `Booking Confirmation - ${trip.name || "trip"}`,
         html,
+        attachments: [
+          {
+            filename: `ticket-${ref}.png`,
+            content: qrPng,
+            cid: qrCid, // 👈 لازم يطابق اللي في HTML
+            contentType: "image/png",
+          },
+        ],
       });
 
       return res.status(201).json({
@@ -244,7 +329,6 @@ export const exportBookings = catchAsync(async (req, res, next) => {
     "اسم الرحلة": b.tripInfo?.name ?? "-",
     "عدد الكبار ": b.adult ?? "-",
     "عدد الاطفال ": b.child ?? "-",
-
     " سعر الرحلة للكبار بالمصري": b.tripInfo?.prices?.adult?.egp ?? "-",
     " سعر الرحلة للكبار باليورو": b.tripInfo?.prices?.adult?.euro ?? "-",
     " سعر الرحلة للاطفال بالمصري": b.tripInfo?.prices?.child?.egp ?? "-",
@@ -252,8 +336,7 @@ export const exportBookings = catchAsync(async (req, res, next) => {
     "  سعر الحجز بالمصري": b.totalPrice?.egp ?? "-",
     "  سعر الحجز باليورو": b.totalPrice?.euro ?? "-",
     "  حالة الدفع": b.payment ? "نعم" : "لا",
-
-    "مواصلات": b.transportation ? "نعم" : "لا",
+    مواصلات: b.transportation ? "نعم" : "لا",
     "تاريخ الحجز": b.bookingDate
       ? new Date(b.bookingDate).toLocaleDateString("ar-EG", {
           timeZone: "Africa/Cairo",
