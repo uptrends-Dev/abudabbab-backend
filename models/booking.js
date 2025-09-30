@@ -37,6 +37,10 @@ const bookingSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    payment: {
+      type: Boolean,
+      required: true,
+    },
   },
   { timestamps: true }
 );

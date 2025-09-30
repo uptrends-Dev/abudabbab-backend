@@ -251,8 +251,9 @@ export const exportBookings = catchAsync(async (req, res, next) => {
     " سعر الرحلة للاطفال باليورو": b.tripInfo?.prices?.child?.euro ?? "-",
     "  سعر الحجز بالمصري": b.totalPrice?.egp ?? "-",
     "  سعر الحجز باليورو": b.totalPrice?.euro ?? "-",
+    "  حالة الدفع": b.payment ? "نعم" : "لا",
 
-    مواصلات: b.transportation ? "نعم" : "لا",
+    "مواصلات": b.transportation ? "نعم" : "لا",
     "تاريخ الحجز": b.bookingDate
       ? new Date(b.bookingDate).toLocaleDateString("ar-EG", {
           timeZone: "Africa/Cairo",
