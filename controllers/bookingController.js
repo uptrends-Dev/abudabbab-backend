@@ -317,6 +317,38 @@ export const getTotalBookingsAndRevenue = catchAsync(async (req, res, next) => {
   });
 });
 
+export const updateBookingState = async (req, res) => {
+  const { id } = req.params; // booking ID
+  const { payment, checkIn } = req.body;
+  try {
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({ message: "الحجز غير موجود" });
+    }
+
+    if (payment !== undefined) {
+      booking.payment = payment;
+    }
+
+    if (checkIn !== undefined) {
+      booking.checkIn = checkIn;
+    }
+
+    if (booking.payment && booking.checkIn) {
+      booking.status = true;
+    }
+    await booking.save();
+
+    res.status(200).json({
+      message: "تم تحديث حالة الدفع والتشيك إن بنجاح",
+      booking,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "حدث خطأ أثناء تحديث الحجز", error });
+  }
+};
+
 // Export bookings to CSV/Excel
 import XLSX from "xlsx";
 export const exportBookings = catchAsync(async (req, res, next) => {

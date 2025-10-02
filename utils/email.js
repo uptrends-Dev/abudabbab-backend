@@ -160,7 +160,7 @@ export async function sendBookingEmail({ to, subject, html, bcc, attachments }) 
     bcc: process.env.ADMIN_BCC || bcc,
     subject,
     html,
-    attachments, // 👈 مهم
+    attachments, 
   });
 }
 
