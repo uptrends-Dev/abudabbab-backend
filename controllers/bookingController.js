@@ -102,7 +102,7 @@ export const createBooking = async (req, res) => {
     // const payload = `${base}/ticket/${booking._id}?ref=${ref}`;
 
     // إنشاء الصورة
-    const qrPayload = JSON.stringify({ bid: String(booking._id) }); // 👈 بس الـ id
+    const qrPayload = JSON.stringify(String(booking._id) ); // 👈 بس الـ id
     const qrPng = await QRCode.toBuffer(qrPayload, {
       type: "png",
       errorCorrectionLevel: "H",
