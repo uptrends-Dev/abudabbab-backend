@@ -8,32 +8,74 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import AppError from "./utils/AppError.js";
 import errorHandler from "./midelWares/errorHandler.js";
 import cors from "cors";
+import crypto from "crypto";
+import authRouter from "./routes/authRoutes.js";
+import { requireAdmin } from "./helpers/auth.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const IS_VERCEL = !!process.env.VERCEL; // Vercel يضبط المتغير ده تلقائيًا
+const IS_VERCEL = !!process.env.VERCEL;
 
+
+
+// Optional: background cleanup (local only)
+
+
+// ============================
 // Middlewares
+// ============================
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
-
 app.use(express.json());
 
-// لو عايز CORS بسيط شغّاله كده (أو خصّص origin من ENV)
-app.use(
-  cors(
-    process.env.CLIENT_URL
-      ? { origin: process.env.CLIENT_URL.split(","), credentials: true }
-      : {}
-  )
-);
 
+// CORS configuration
+// --- CORS: first middleware ---
+// --- CORS for cookies (put BEFORE routes) ---
+const allowed = new Set([
+  "http://localhost:3000",
+  "https://ozone-app-omega.vercel.app",
+  "https://ozone-website-inky.vercel.app",
+]);
+
+app.use((req, res, next) => {
+  const origin = (req.headers.origin || "").replace(/\/$/, "");
+
+  if (origin && allowed.has(origin)) {
+    // IMPORTANT: never "*" when sending credentials
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  }
+
+  // helpful but optional
+  res.header("Vary", "Origin");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  // include any extra headers you use
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+// ============================
 // Routes
-app.use("/api/trips", tripesRoutes);
-app.use("/api/bookings", bookingRoutes);
+// ============================
+
+// Auth endpoints
+app.use("/api/admin/auth", authRouter);
+
+// ✅ Protect admin-only APIs by adding `requireAdmin` before the router.
+// If ALL trips/bookings are admin-only, uncomment the two lines below:
+app.use("/api/trips", requireAdmin, tripesRoutes);
+app.use("/api/bookings", requireAdmin, bookingRoutes);
+// app.use("/api/trips", tripesRoutes);
+// app.use("/api/bookings", bookingRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
@@ -57,18 +99,19 @@ if (!IS_VERCEL) {
   });
 }
 
-// Graceful shutdown (للتشغيل المحلي فقط)
-process.on("unhandledRejection", (err) => {
-  console.error("UNHANDLED REJECTION 💥", err);
-  if (server) {
-    server.close(() => {
-      console.log("Shutting down gracefully…");
-      process.exit(1);
-    });
-  } else {
-    process.exit(1);
-  }
-});
+// // Graceful shutdown (للتشغيل المحلي فقط)
+// process.on("unhandledRejection", (err) => {
+//   console.error("UNHANDLED REJECTION 💥", err);
+//   if (server) {
+//     server.close(() => {
+//       console.log("Shutting down gracefully…");
+//       process.exit(1);
+//     });
+//   } else {
+//     process.exit(1);
+//   }
+// });
+// app.options("*", cors(corsOptions));
 
 // مهم جدًا لفريسل
 export default app;
