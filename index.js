@@ -37,8 +37,7 @@ app.use(express.json());
 // --- CORS for cookies (put BEFORE routes) ---
 const allowed = new Set([
   "http://localhost:3000",
-  "https://ozone-app-omega.vercel.app",
-  "https://ozone-website-inky.vercel.app",
+  "https://abudabbab.vercel.app",
 ]);
 
 app.use((req, res, next) => {
