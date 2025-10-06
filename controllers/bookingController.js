@@ -64,7 +64,7 @@ dayjs.extend(timezone);
 // controller
 import QRCode from "qrcode";
 // ... باقي الاستيرادات
-
+// create Booking
 export const createBooking = async (req, res) => {
   try {
     const newBooking = { ...req.body };
@@ -168,6 +168,41 @@ export const getAllBookings = async (req, res) => {
     // فلتر النقل
     if (req.query.transferFilter && req.query.transferFilter !== "all") {
       query.transportation = req.query.transferFilter === "yes";
+    }
+
+    // فلتر حالة الدفع (yes/no/all)
+    if (req.query.payment && req.query.payment !== "all") {
+      // دعم قيم 'yes'/'no' أو 'true'/'false'
+      const p = req.query.payment.toLowerCase();
+      query.payment = p === "yes" || p === "true";
+    }
+
+    // فلتر التشيك إن (checkIn) (yes/no/all)
+    if (req.query.checkIn && req.query.checkIn !== "all") {
+      const c = req.query.checkIn.toLowerCase();
+      query.checkIn = c === "yes" || c === "true";
+    }
+
+    // فلتر باسم الرحلة (يجري بحث جزئي وحساس لحالة الأحرف)
+    if (req.query.tripName) {
+      const trips = await Trip.find(
+        { name: { $regex: req.query.tripName, $options: "i" } },
+        "_id"
+      ).lean();
+      const tripIds = trips.map((t) => t._id);
+
+      // لو مافيش رحلات مطابقة، رجّع نتيجة فارغة سريعة
+      if (tripIds.length === 0) {
+        return res.status(200).json({
+          totalBookings: 0,
+          currentPage: page,
+          totalPages: 0,
+          sort: req.query.sort || "desc",
+          bookings: [],
+        });
+      }
+
+      query.tripInfo = { $in: tripIds };
     }
 
     // فلتر الوقت على createdAt
