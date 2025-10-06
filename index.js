@@ -34,7 +34,7 @@ app.use(express.json());
 
 // CORS configuration
 // --- CORS: first middleware ---
-// --- CORS for cookies (put BEFORE routes) ---
+// --- CORS for cookies (put BEFORE routes) 
 const allowed = new Set([
   "http://localhost:3000",
   "https://abudabbab.vercel.app",
