@@ -4,7 +4,8 @@ import {
   createBooking,
   advancedTripsInfos,
   getTotalBookingsAndRevenue,
-  exportBookings
+  exportBookings,
+  updateBookingState
 } from "../controllers/bookingController.js";
 import express from "express";
 
@@ -16,6 +17,7 @@ router.get("/getTotalBookingsAndRevenue/admin", getTotalBookingsAndRevenue);
 router.get("/admin/:id", getBookingById);
 router.post("/export", exportBookings);
 router.post("/", createBooking);
+router.patch("/admin/:id", updateBookingState);
 
 
 export default router;
