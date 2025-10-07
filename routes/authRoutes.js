@@ -28,6 +28,8 @@ authRouter.post("/login", async (req, res, next) => {
         httpOnly: true,
         secure: true, // true if in production
         sameSite: "none",
+        domain: ".example.com",// share across subdomains; omit or set correctly
+        path: "/",
       })
       // .cookie("access_token", token, {
       //   httpOnly: true,
@@ -59,6 +61,8 @@ authRouter.post("/logout", requireAdmin, async (req, res, next) => {
         httpOnly: true,
         secure: true, // true if in production
         sameSite: "none",
+        domain: ".example.com",// share across subdomains; omit or set correctly
+        path: "/",
       });
     // .clearCookie("access_token", {
     //   httpOnly: true,
