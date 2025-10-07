@@ -45,7 +45,7 @@ app.use((req, res, next) => {
 
   if (origin && allowed.has(origin)) {
     // IMPORTANT: never "*" when sending credentials
-    res.header("Access-Control-Allow-Origin", "https://abudabbab.vercel.app");
+    res.header("Access-Control-Allow-Origin", allowed);
     res.header("Access-Control-Allow-Credentials", "true");
   }
 
