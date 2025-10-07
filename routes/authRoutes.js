@@ -61,7 +61,7 @@ authRouter.post("/logout", requireAdmin, async (req, res, next) => {
         httpOnly: true,
         secure: true, // true if in production
         sameSite: "none",
-        domain: ".example.com",// share across subdomains; omit or set correctly
+        domain: ".vercel.app",// share across subdomains; omit or set correctly
         path: "/",
       });
     // .clearCookie("access_token", {
