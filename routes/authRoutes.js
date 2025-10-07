@@ -54,11 +54,17 @@ authRouter.post("/login", async (req, res, next) => {
  */
 authRouter.post("/logout", requireAdmin, async (req, res, next) => {
   try {
-    res.clearCookie("access_token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true if in production
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    });
+    res
+      .clearCookie("access_token", {
+        httpOnly: true,
+        secure: true, // true if in production
+        sameSite: "none",
+      });
+    // .clearCookie("access_token", {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production", // true if in production
+    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    // });
     revokeSession(req.admin.token);
     res.status(204).end();
   } catch (err) {
