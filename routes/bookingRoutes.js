@@ -8,16 +8,18 @@ import {
   updateBookingState
 } from "../controllers/bookingController.js";
 import express from "express";
+import { requireAdmin } from "../helpers/auth.js";
 
 const router = express.Router();
 
-router.get("/admin", getAllBookings);
-router.get("/advancedTripsInfos/admin", advancedTripsInfos);
-router.get("/getTotalBookingsAndRevenue/admin", getTotalBookingsAndRevenue);
-router.get("/admin/:id", getBookingById);
-router.post("/export", exportBookings);
+router.get("/admin", requireAdmin, getAllBookings);
+router.get("/advancedTripsInfos/admin", requireAdmin, advancedTripsInfos);
+router.get("/getTotalBookingsAndRevenue/admin", requireAdmin, getTotalBookingsAndRevenue);
+router.get("/admin/:id", requireAdmin, getBookingById);
+router.post("/export", requireAdmin, exportBookings);
+router.patch("/admin/:id", requireAdmin, updateBookingState);
+
 router.post("/", createBooking);
-router.patch("/admin/:id", updateBookingState);
 
 
 export default router;

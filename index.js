@@ -35,32 +35,32 @@ app.use(express.json());
 // CORS configuration
 // --- CORS: first middleware ---
 // --- CORS for cookies (put BEFORE routes) 
-const allowed = new Set([
-  "http://localhost:3000",
-  "https://abudabbab.vercel.app",
-]);
+// const allowed = new Set([
+//   "http://localhost:3000",
+//   "https://abudabbab.vercel.app",
+// ]);
 
-app.use((req, res, next) => {
-  const origin = (req.headers.origin || "").replace(/\/$/, "");
+// app.use((req, res, next) => {
+//   const origin = (req.headers.origin || "").replace(/\/$/, "");
 
-  if (origin && allowed.has(origin)) {
-    // IMPORTANT: never "*" when sending credentials
-    res.header("Access-Control-Allow-Origin", allowed);
-    res.header("Access-Control-Allow-Credentials", "true");
-  }
+//   if (origin && allowed.has(origin)) {
+//     // IMPORTANT: never "*" when sending credentials
+//     res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+//     res.header("Access-Control-Allow-Credentials", "true");
+//   }
 
-  // helpful but optional
-  res.header("Vary", "Origin");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  // include any extra headers you use
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization"
-  );
+//   // helpful but optional
+//   res.header("Vary", "Origin");
+//   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+//   // include any extra headers you use
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Content-Type, Authorization"
+//   );
 
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+//   if (req.method === "OPTIONS") return res.sendStatus(204);
+//   next();
+// });
 
 // ============================
 // Routes
@@ -72,7 +72,7 @@ app.use("/api/admin/auth", authRouter);
 // ✅ Protect admin-only APIs by adding `requireAdmin` before the router.
 // If ALL trips/bookings are admin-only, uncomment the two lines below:
 app.use("/api/trips", requireAdmin, tripesRoutes);
-app.use("/api/bookings", requireAdmin, bookingRoutes);
+app.use("/api/bookings", bookingRoutes);
 // app.use("/api/trips", tripesRoutes);
 // app.use("/api/bookings", bookingRoutes);
 

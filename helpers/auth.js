@@ -15,6 +15,7 @@ export function issueSession(payload, ttlSec = SESSION_TTL_SEC) {
   const token = "sess_" + crypto.randomUUID();
   const exp = Date.now() + ttlSec * 1000;
   SESSIONS.set(token, { ...payload, exp });
+
   return { token, exp, ttlSec };
 }
 
@@ -52,9 +53,11 @@ export async function verifyAdmin(email, password) {
 export function requireAdmin(req, res, next) {
   const hdr = req.headers.authorization || "";
   const token = hdr.replace(/^Bearer\s+/i, "").trim();
+  console.log(token)
   if (!token) return next(new AppError("Unauthorized", 401));
 
   const session = getSession(token);
+  console.log(session)
   if (!session) return next(new AppError("Unauthorized", 401));
 
   // Attach admin context
