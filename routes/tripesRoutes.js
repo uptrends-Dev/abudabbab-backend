@@ -11,7 +11,7 @@ import { requireAdmin } from "../helpers/auth.js";
 
 // Example route for trips
 router.get("/", getAllTrips);
-router.get("/:id",requireAdmin, getTripById);
+router.get("/:id", getTripById);
 router.post("/admin",requireAdmin, createTrip);
 router.delete("/admin/:id",requireAdmin, deleteTrip);
 router.put("/admin/:id",requireAdmin, updateTrip);
