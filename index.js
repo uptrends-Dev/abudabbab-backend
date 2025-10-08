@@ -71,7 +71,7 @@ app.use("/api/admin/auth", authRouter);
 
 // ✅ Protect admin-only APIs by adding `requireAdmin` before the router.
 // If ALL trips/bookings are admin-only, uncomment the two lines below:
-app.use("/api/trips", requireAdmin, tripesRoutes);
+app.use("/api/trips", tripesRoutes);
 app.use("/api/bookings", bookingRoutes);
 // app.use("/api/trips", tripesRoutes);
 // app.use("/api/bookings", bookingRoutes);

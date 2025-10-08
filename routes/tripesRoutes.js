@@ -7,11 +7,13 @@ import {
   deleteTrip,
   updateTrip,
 } from "../controllers/tripsControler.js";
+import { requireAdmin } from "../helpers/auth.js";
+
 // Example route for trips
 router.get("/", getAllTrips);
-router.get("/:id", getTripById);
-router.post("/admin", createTrip);
-router.delete("/admin/:id", deleteTrip);
-router.put("/admin/:id", updateTrip);
+router.get("/:id",requireAdmin, getTripById);
+router.post("/admin",requireAdmin, createTrip);
+router.delete("/admin/:id",requireAdmin, deleteTrip);
+router.put("/admin/:id",requireAdmin, updateTrip);
 
 export default router;
