@@ -36,7 +36,7 @@ export async function register(req, res, next) {
     }
 
     // Validate role against enum
-    const ALLOWED_ROLES = ["SUPER_ADMIN", "ADMIN", "EMPLOYEE", "GATE"];
+    const ALLOWED_ROLES = ["FINANCE", "ADMIN", "EMPLOYEE", "GATE"];
     if (role && !ALLOWED_ROLES.includes(role)) {
       return next(new AppError(`Invalid role. Allowed: ${ALLOWED_ROLES.join(", ")}`, 400));
     }
