@@ -9,7 +9,7 @@ const authRouter = Router();
 
 authRouter.get("/getallusers", requireAdmin, allowedTo(), getAllUsers);
 authRouter.post("/register", requireAdmin, allowedTo(), register);
-authRouter.post("/updateuser", requireAdmin, allowedTo(), updateUser);
+authRouter.put("/updateuser", requireAdmin, allowedTo(), updateUser);
 authRouter.delete("/deleteuser", requireAdmin, allowedTo(), deleteUser);
 
 authRouter.post("/login", login);
