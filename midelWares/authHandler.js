@@ -26,15 +26,21 @@ export function requireAdmin(req, res, next) {
 
 export function allowedTo(...roles) {
   return (req, res, next) => {
-    // suber admin can do anything
-    if (req.admin.role && req.admin.role == "SUPER_ADMIN") {
-      next();
-      return;
+    const role = req?.admin?.role;
+    if (!role) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-    // regular admin can only access their own resources
-    if (req.admin.role && roles.includes(req.admin.role)) {
-      next();
+
+    // super admin can do anything
+    if (role === "SUPER_ADMIN") {
+      return next();
     }
+
+    // roles passed to allowedTo(...) are permitted
+    if (roles.includes(role)) {
+      return next();
+    }
+
     return res.status(403).json({ message: "Access denied" });
   };
 }
