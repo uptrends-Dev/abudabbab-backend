@@ -9,14 +9,14 @@ export function requireAdmin(req, res, next) {
   const token = hdr.replace(/^Bearer\s+/i, "").trim();
 
   // console.log(token)
-  if (!token) return next(new AppError("Unauthorized", 401));
+  if (!token) return next(new AppError("token Unauthorized", 401));
 
   const session = getSession(token);
   console.log(session)
-  if (!session) return next(new AppError("Unauthorized", 401));
+  if (!session) return next(new AppError("session Unauthorized", 401));
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  if (!decoded) return next(new AppError("Unauthorized", 401));
+  if (!decoded) return next(new AppError("decode Unauthorized", 401));
 
   // Attach admin context
   // req.admin = { id: session.adminId, roles: session.roles, email: session.email, token };
