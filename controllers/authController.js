@@ -226,6 +226,10 @@ export async function deleteUser(req, res, next) {
     const { id } = req.body || {};
     if (!id) return next(new AppError("User ID is required", 400));
 
+    if (req.admin.role === "SUPER_ADMIN") {
+      return next(new AppError("You cannot delete your own super account", 400));
+    }
+
     const deletedUser = await AdminUser.findByIdAndDelete(id).select('-password');
     if (!deletedUser) return next(new AppError("User not found", 404));
 
