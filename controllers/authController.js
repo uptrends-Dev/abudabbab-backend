@@ -151,7 +151,89 @@ export function getMe(req, res) {
   res.json({
     username: req.admin.username,
     role: req.admin.role,
-    eslam: "semedo",
   });
 }
 
+
+export async function getAllUsers(req, res, next) {
+  try {
+    const users = await AdminUser.find({}, '-password'); // Exclude password field
+    res.status(200).json({ users });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+// import AppError and AdminUser as you already do
+
+export async function updateUser(req, res, next) {
+  try {
+    const { id, password, ...updates } = req.body || {};
+    if (!id) return next(new AppError("User ID is required", 400));
+
+    // Prevent updating sensitive fields directly
+    delete updates.isActive;
+    delete updates.lastLogin;
+
+    // If email or username is being updated, check for uniqueness
+    if (updates.email) {
+      const existingEmail = await AdminUser.findOne({ email: updates.email, _id: { $ne: id } });
+      if (existingEmail) return next(new AppError("Email already in use", 409));
+    }
+    if (updates.username) {
+      const existingUsername = await AdminUser.findOne({ username: updates.username, _id: { $ne: id } });
+      if (existingUsername) return next(new AppError("Username already in use", 409));
+    }
+
+    const user = await AdminUser.findById(id);
+    if (!user) return next(new AppError("User not found", 404));
+
+    // Assign non-password fields
+    Object.assign(user, updates);
+
+    // If password provided, hash and set it
+    if (typeof password === "string" && password.trim().length) {
+      const saltRounds = 10; // adjust as needed
+      user.password = await bcrypt.hash(password.trim(), saltRounds);
+      // Optional: mark password changed timestamp if your schema uses it
+      if ("passwordChangedAt" in user) {
+        user.passwordChangedAt = new Date();
+      }
+    }
+
+    await user.save({ validateModifiedOnly: true });
+
+    const safe = user.toObject();
+    delete safe.password;
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: safe,
+    });
+  } catch (err) {
+    // Handle duplicate key errors
+    if (err?.code === 11000) {
+      const dupField = Object.keys(err.keyPattern || {})[0] || "field";
+      return next(new AppError(`An account with this ${dupField} already exists`, 409));
+    }
+    next(err);
+  }
+}
+
+export async function deleteUser(req, res, next) {
+  try {
+    const { id } = req.body || {};
+    if (!id) return next(new AppError("User ID is required", 400));
+
+    const deletedUser = await AdminUser.findByIdAndDelete(id).select('-password');
+    if (!deletedUser) return next(new AppError("User not found", 404));
+
+    res.status(200).json({
+      message: "User deleted successfully",
+      user: deletedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
