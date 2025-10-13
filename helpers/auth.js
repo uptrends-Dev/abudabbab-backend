@@ -14,8 +14,7 @@ const SESSION_TTL_SEC = Number(process.env.ADMIN_SESSION_TTL_SEC || 60 * 60 * 24
 // }, 60 * 1000);
 
 export function issueSession(payload, token, ttlSec = SESSION_TTL_SEC) {
-  // const token = jwt.sign({ id: payload.adminId, role: payload.role }, process.env.JWT_SECRET);
-  // const token = "sess_" + crypto.randomUUID();
+
   const exp = Date.now() + ttlSec * 1000;
   SESSIONS.set(token, { ...payload, exp });
 

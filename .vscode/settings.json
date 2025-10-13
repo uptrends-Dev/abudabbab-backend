@@ -1,3 +1,11 @@
 {
-  "workbench.editor.enablePreviewFromQuickOpen": true
+  // Ignore heavy folders from file watching and search
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+  },
+  "search.exclude": {
+    "**/node_modules/**": true,
+  },
+  "postman.settings.dotenv-detection-notification-visibility": false,
+
 }

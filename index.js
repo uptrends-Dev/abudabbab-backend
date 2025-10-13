@@ -37,10 +37,9 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // DB connection (مرة واحدة عند الـ cold start)
-connection().catch((err) => {
-  console.error("Mongo connection error:", err);
-});
+connection();
 
+// Start server only if not in Vercel environment
 let server;
 if (!IS_VERCEL) {
   server = app.listen(PORT, () => {

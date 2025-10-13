@@ -1,13 +1,25 @@
+// db.js
 import mongoose from "mongoose";
 
-// DB connection
-async function connection() {
+export default async function connectDB(uri = process.env.MONGO_URL) {
+  if (!uri) throw new Error("MONGO_URL is missing");
+
+  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
+  if (mongoose.connection.readyState === 2) {
+    // if a connect is already in progress, just wait for it
+    await mongoose.connection.asPromise();
+    return mongoose.connection;
+  }
+
   try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log("mongoDb connected successfully");
-  } catch (error) {
-    console.error("Mongo connection error:", error);
-    process.exit(1);
+    await mongoose.connect(uri, {
+      dbName: process.env.MONGO_DB_NAME, // optional
+    });
+    console.log("MongoDB connected");
+    return mongoose.connection;
+  } catch (err) {
+    console.error("MongoDB connection error:", err?.message || err);
+    throw err; // let caller decide what to do
   }
 }
-export default connection;
