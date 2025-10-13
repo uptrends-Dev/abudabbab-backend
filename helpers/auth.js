@@ -2,7 +2,7 @@ import AdminUser from "../models/adminUsers.js";
 import bcrypt from "bcryptjs";
 
 
-// // Simple in-memory session store (replace with Redis in prod)
+// Simple in-memory session store (replace with Redis in prod)
 const SESSIONS = new Map(); // token -> { adminId, roles, exp }
 const SESSION_TTL_SEC = Number(process.env.ADMIN_SESSION_TTL_SEC || 60 * 60 * 24); // 30m default
 
