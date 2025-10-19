@@ -8,6 +8,7 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import AppError from "./utils/AppError.js";
 import errorHandler from "./midelWares/errorHandler.js";
 import authRouter from "./routes/authRoutes.js";
+import couponRouter from "./routes/couponRoutes.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use("/api/admin/auth", authRouter);
 // If ALL trips/bookings are admin-only, uncomment the two lines below:
 app.use("/api/trips", tripesRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/coupons", couponRouter);
 
 // 404 handler
 app.use((req, res, next) => {

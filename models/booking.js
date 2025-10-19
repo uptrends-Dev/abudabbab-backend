@@ -18,6 +18,17 @@ const bookingSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    subtotal: {
+      egp: { type: Number, required: true, min: 0 },
+      euro: { type: Number, required: true, min: 0 },
+    },
+    coupon: {
+      code: { type: String, trim: true },
+      discount: {
+        egp: { type: Number, min: 0 },
+        euro: { type: Number, min: 0 },
+      },
+    },
     totalPrice: {
       egp: { type: Number, required: true, min: 0 },
       euro: { type: Number, required: true, min: 0 },
