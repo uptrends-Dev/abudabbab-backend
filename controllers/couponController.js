@@ -82,3 +82,27 @@ export const deleteCoupon = async (req, res, next) => {
   }
 };
 
+
+export const toggleCoupon = async (req, res, next) => {
+  try {
+    const coupon = await Coupon.findById(req.params.id);
+    if (!coupon) {
+      return next(new AppError("No coupon found with that ID", 404));
+    }
+
+    // Toggle the active status
+    coupon.active = !coupon.active;
+
+    // Save the updated coupon
+    await coupon.save();
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        coupon,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

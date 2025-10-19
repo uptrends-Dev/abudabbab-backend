@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCoupon, deleteCoupon, getAllCoupons, getCoupon, updateCoupon } from "../controllers/couponController.js";
+import { createCoupon, deleteCoupon, getAllCoupons, getCoupon, toggleCoupon, updateCoupon } from "../controllers/couponController.js";
 import { allowedTo, requireAdmin } from "../midelWares/authHandler.js";
 
 
@@ -12,5 +12,6 @@ couponRouter.get("/", requireAdmin, allowedTo("admin"), getAllCoupons);
 couponRouter.get("/:id", requireAdmin, allowedTo("admin"), getCoupon);
 couponRouter.put("/:id", requireAdmin, allowedTo("admin"), updateCoupon);
 couponRouter.delete("/:id", requireAdmin, allowedTo("admin"), deleteCoupon);
+couponRouter.patch("/:id/toggle", requireAdmin, allowedTo("admin"), toggleCoupon);
 
 export default couponRouter;
