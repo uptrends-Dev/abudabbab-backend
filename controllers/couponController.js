@@ -106,3 +106,28 @@ export const toggleCoupon = async (req, res, next) => {
     next(error);
   }
 };
+
+export const validateCoupon = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const coupon = await Coupon.findOne({ code, active: true });
+
+    if (!coupon) {
+      return next(new AppError("Invalid or inactive coupon code", 400));
+    }
+
+    if (coupon.expirationDate < new Date()) {
+      return next(new AppError("Coupon has expired", 400));
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        discount: coupon.discount,
+        type: coupon.type,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
