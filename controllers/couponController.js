@@ -113,14 +113,14 @@ export const validateCoupon = async (req, res, next) => {
     const coupon = await Coupon.findOne({ code, active: true });
 
     if (!coupon) {
-      return next(new AppError("Invalid or inactive coupon code", 400));
+      return next(new AppError("Invalid or inactive coupon code", 404));
     }
 
-    if (coupon.expirationDate < new Date()) {
+    if (coupon.expirationDate && coupon.expirationDate <= new Date()) {
       return next(new AppError("Coupon has expired", 400));
     }
 
-    res.status(200).json({
+   return  res.status(200).json({
       status: "success",
       data: {
         discount: coupon.discount,
